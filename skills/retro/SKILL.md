@@ -14,7 +14,16 @@ Agents improve when corrections become repo edits: work → correct → **reflec
 
 Scripts (Python 3, no dependencies): `scripts/retro.py` scans sessions through the local OpenCode API, `scripts/turn-cost.py` breaks down cost. Paths below assume the skill lives at `~/.config/opencode/skills/retro/`.
 
-Files it maintains, all in `~/.config/opencode/`: `AGENTS.md` (rules), `lessons.md` (what was learned, with a `watch:` signal each), `changelog.md` (why things changed, what to verify later). State that must not be committed (the scan watermark) lives in `~/.local/share/opencode/retro/state.json`.
+Files it maintains, all in `~/.config/opencode/`:
+
+| File | Holds | Test |
+|---|---|---|
+| `AGENTS.md` | How to behave. One-line imperatives, read every turn. | "Would the agent act differently?" |
+| `memory/<topic>.md` | What is true about this user and environment. Indexed by one line each under `# Memory` in `AGENTS.md`. | "Is this a fact, not an instruction?" |
+| `lessons.md` | What was learned and the `watch:` signal that shows if it stopped working. | "Can the scan see the signal?" |
+| `changelog.md` | Why a change was made, how to judge it, how to revert it. | "Could a stranger decide keep or revert from this?" |
+
+State that must not be committed (the scan watermark) lives in `~/.local/share/opencode/retro/state.json`.
 
 ---
 
@@ -35,10 +44,12 @@ Pick the first that holds:
 | **One-off** — typo, momentary confusion, a detail only this task needed | Nothing. Say so and stop. |
 | **Repeated behaviour mistake** — seen before, or clearly a class of mistake | One line in `AGENTS.md`. Project-specific → that project's `AGENTS.md`. |
 | **Repeated procedure** — steps, tools, decision points | A skill. Edit an existing one if it almost covered it. |
-| **Preference or fact** about the user or environment | A one-line note in `AGENTS.md`, dated: `(user directive YYYY-MM-DD)`. |
+| **Preference or fact** about the user or environment | `memory/<topic>.md`, plus one pointer line under `# Memory` in `AGENTS.md`. See below. |
 | **"Check this later"** | `changelog.md` → Pending verifications, with a judge date. |
 
 Two lessons, two edits. Do not bundle.
+
+**Memory.** Create `~/.config/opencode/memory/` the first time there is a fact to store; do not create it empty. One file per topic (`environment.md`, `models.md`, `writing.md`), short, factual, no steps. The index line in `AGENTS.md` is `- <topic>: <what is in it, ≤ 12 words>: memory/<topic>.md`. The index is capped at **8 lines**; at the cap, merge topics before adding. Not memory: anything with steps (a skill), anything one skill owns (that skill's `references/`), anything secret.
 
 ### 3. Write the smallest edit
 
@@ -159,7 +170,8 @@ Then bloat:
 
 - **Duplicates** — two rules saying the same thing. Keep the sharper one.
 - **Dead rules** — tools or workflows no longer in use; exhortations that never change behaviour ("write good code").
-- **Wrong layer** — a procedure spelled out as a rule (→ skill); a durable fact buried in a skill (→ note); a note that is really a standing instruction (→ rule).
+- **Wrong layer** — a procedure spelled out as a rule (→ skill); a fact written as a rule (→ memory); a memory topic that is really a standing instruction (→ rule); a fact that only one skill uses (→ that skill's `references/`).
+- **Memory index** — over 8 lines, or a pointer whose file no longer exists, or a topic file with no pointer. Merge topics; do not raise the cap.
 - **Stale directives** — dated `(user directive …)` lines older than six months with no recurrence. Ask whether they still hold.
 
 Do not flag security or trust-boundary rules. List those separately as "touch only on request".
