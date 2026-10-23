@@ -49,11 +49,24 @@ Restart OpenCode, then read `$DEST/AGENTS.md` and delete what you disagree with.
 
 ### Add to an existing setup
 
-You already have an agent and a config directory. Tell your agent:
+You already have an agent and a config directory. Paste this to your agent:
 
-> Look at https://github.com/Nyholm/retrospective, take inspiration and add it here.
+> Install the retro skill from https://github.com/Nyholm/retrospective into my OpenCode config. Fetch the README first and follow its "For agents" section exactly. Fetch raw files, do not clone. Do not overwrite my existing AGENTS.md; merge the rules I do not already have. Create lessons.md and changelog.md only if they are missing. Install the commit-msg hook, commit with a Why:/Change: message, then show me a list of every file you created or changed.
 
-The agent reads this repo over raw.githubusercontent.com, downloads the skill files to `~/.config/opencode/skills/retro/`, merges relevant rules into your `AGENTS.md`, creates `lessons.md` and `changelog.md` if you do not have them, sets up the commit hook, commits, and tells you what it changed. No curl, no manual copy.
+The agent does the download, merge and commit. Review the diff it shows you and delete any rule you disagree with.
+
+#### For agents
+
+You are installing this repo into a user's OpenCode config. `BASE=https://raw.githubusercontent.com/Nyholm/retrospective/main`, `DEST=~/.config/opencode`. Fetch files with curl from `BASE`; do not `git clone`.
+
+1. **Skill** — fetch into `DEST/skills/retro/`: `skills/retro/SKILL.md`, `skills/retro/scripts/retro.py`, `skills/retro/scripts/turn-cost.py`. `chmod +x` the scripts. Overwrite if present; the skill is not user-edited.
+2. **Rules** — fetch `AGENTS.md` to a temp path. If `DEST/AGENTS.md` exists, append only the rules whose meaning is not already covered, under a heading `## From Nyholm/retrospective`; keep the user's file order and wording. If it does not exist, copy the file as is.
+3. **Ledgers** — fetch `lessons.md` and `changelog.md` into `DEST` only if they are missing. Never overwrite them; they hold the user's history.
+4. **Hook** — fetch `githooks/commit-msg` to `DEST/.githooks/commit-msg`, `chmod +x`. If `DEST` is not a git repo, `git init`. Run `git config core.hooksPath .githooks`. If `core.hooksPath` is already set to something else, leave it and tell the user.
+5. **Commit** — stage only the paths you touched (never `git add -A`). Message: subject `config: add retro skill from Nyholm/retrospective`, body with `Why:` and `Change:` lines.
+6. **Report** — list every file created, changed or skipped, the rules you appended, and remind the user to restart OpenCode so the skill loads. Do not run the retro.
+
+Other agents (Claude Code, Codex, Cursor): put the rules in that tool's global instructions file instead of `DEST/AGENTS.md`, keep steps 3–6, skip step 1 (the scripts need the OpenCode API).
 
 ## Usage
 
