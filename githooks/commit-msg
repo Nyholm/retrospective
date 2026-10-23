@@ -1,0 +1,17 @@
+#!/bin/sh
+# Reject commits that do not explain why. The retro-skill reads this history.
+msg=$(grep -v '^#' "$1")
+first=$(printf '%s\n' "$msg" | sed -n '1p')
+
+case "$first" in
+  Merge*|Revert*|fixup!*|squash!*) exit 0 ;;
+esac
+
+if ! printf '%s\n' "$msg" | grep -qE '^Why:[[:space:]]*[^[:space:]]'; then
+  echo "commit-msg: missing a non-empty 'Why:' line (see README.md)" >&2
+  exit 1
+fi
+if ! printf '%s\n' "$msg" | grep -qE '^Change:[[:space:]]*[^[:space:]]'; then
+  echo "commit-msg: missing a non-empty 'Change:' line (see README.md)" >&2
+  exit 1
+fi
