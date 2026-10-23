@@ -49,22 +49,11 @@ Restart OpenCode, then read `$DEST/AGENTS.md` and delete what you disagree with.
 
 ### Add to an existing setup
 
-You already have an `AGENTS.md`, skills, or other files in `~/.config/opencode`. Download only the retro skill pieces:
+You already have an agent and a config directory. Tell your agent:
 
-```bash
-BASE="https://raw.githubusercontent.com/Nyholm/retrospective/main"
-DEST="$HOME/.config/opencode"
+> Look at https://github.com/Nyholm/retrospective, take inspiration and add it here.
 
-mkdir -p "$DEST/skills/retro/scripts"
-for f in skills/retro/SKILL.md skills/retro/scripts/retro.py skills/retro/scripts/turn-cost.py; do
-  curl -sSfL "$BASE/$f" -o "$DEST/$f"
-done
-curl -sSfL "$BASE/githooks/commit-msg" -o "$DEST/.githooks/commit-msg" 2>/dev/null; chmod +x "$DEST/.githooks/commit-msg" 2>/dev/null; true
-
-chmod +x "$DEST/skills/retro/scripts/*.py"
-```
-
-Then copy the relevant lines from `AGENTS.md`, `lessons.md` and `changelog.md` into your existing files — or read them for reference and keep your own. Rules you did not choose are rules you will fight.
+The agent reads this repo over raw.githubusercontent.com, downloads the skill files to `~/.config/opencode/skills/retro/`, merges relevant rules into your `AGENTS.md`, creates `lessons.md` and `changelog.md` if you do not have them, sets up the commit hook, commits, and tells you what it changed. No curl, no manual copy.
 
 ## Usage
 
@@ -85,10 +74,3 @@ Then copy the relevant lines from `AGENTS.md`, `lessons.md` and `changelog.md` i
 4. **After a week, say "retro".** It scans the sessions since last time and shows what it found. Approve what you want. Reject the rest — the rejection is recorded so it is not proposed again.
 5. **Name the file, symbol or command in your first message.** The single biggest cost lever. "Fix the login bug" costs ten exploratory turns; "fix the null check in `LoginHandler::authenticate`" costs one.
 
-## Try it without installing
-
-To adopt the pattern in a single project without downloading anything, give your agent this prompt:
-
-> Look at https://github.com/Nyholm/retrospective, take inspiration and add it here.
-
-The agent reads the repo over raw.githubusercontent.com and adapts the pieces that fit: usually a project `AGENTS.md` and a `lessons.md`. The scan scripts stay global — for those you need the full install.
