@@ -96,13 +96,15 @@ def gist(inp):
 
 
 def collect(s, users_only=False):
-    d = {"s": s, "users": [], "friction": [], "tools": Counter(), "links": set(), "types": Counter()}
+    d = {"s": s, "users": [], "friction": [], "tools": Counter(), "links": set(), "types": Counter(), "skills": Counter()}
     aborted = False
     suffix = "&type=user" if users_only else ""
     for m in pages(f"/api/session/{s['id']}/message?limit=100{suffix}"):
         t = m["type"]
         d["types"][t] += 1
-        if t == "user":
+        if t == "skill":
+            d["skills"][m.get("name") or m.get("skill") or "(user-activated)"] += 1
+        elif t == "user":
             text = m.get("text") or ""
             d["links"].update(LINKS.findall(text))
             d["users"].append({"text": text, "cue": bool(CUES.search(text)), "after_abort": aborted})
@@ -119,6 +121,9 @@ def collect(s, users_only=False):
                 elif c["type"] == "tool":
                     d["tools"][c["name"]] += 1
                     st = c.get("state") or {}
+                    if c["name"] == "skill":
+                        inp = st.get("input") or {}
+                        d["skills"][inp.get("id") or inp.get("name") or "?"] += 1
                     for blk in st.get("content") or []:
                         if blk.get("type") == "text":
                             d["links"].update(LINKS.findall(blk.get("text") or ""))
@@ -144,8 +149,8 @@ def render(d, full=False):
         f"assistant_msgs={d['types']['assistant']} compactions={d['types']['compaction']} "
         f"outcome={s.get('outcome') or 'n/a'}"
     )
-    if d["types"]["skill"]:
-        print(f"user-activated skills: {d['types']['skill']}")
+    if d["skills"]:
+        print("skills: " + ", ".join(f"{k}×{v}" for k, v in d["skills"].most_common()))
     if d["tools"]:
         print("tools: " + ", ".join(f"{k}×{v}" for k, v in d["tools"].most_common(8)))
     if d["links"]:
@@ -235,6 +240,32 @@ def patterns(collected):
         print(f"- ×{n} in {sid}: {short(g['example'], 200)}")
     if not within:
         print("none")
+    print()
+
+
+def skill_loads(collected):
+    """Loads per skill across the batch, and installed skills that were never loaded."""
+    loads = Counter()
+    sessions = {}
+    for d in collected:
+        for name, n in d["skills"].items():
+            loads[name] += n
+            sessions.setdefault(name, set()).add(d["s"]["id"])
+    installed = set()
+    skills_dir = os.path.join(CONFIG_DIR, "skills")
+    if os.path.isdir(skills_dir):
+        for name in os.listdir(skills_dir):
+            if os.path.isfile(os.path.join(skills_dir, name, "SKILL.md")):
+                installed.add(name)
+    print("# skill loads")
+    if loads:
+        for name, n in loads.most_common():
+            print(f"- {name}: ×{n} in {len(sessions[name])} sessions")
+    else:
+        print("none")
+    unused = sorted(installed - set(loads))
+    if unused:
+        print("never loaded this batch: " + ", ".join(unused))
     print()
 
 
@@ -331,6 +362,7 @@ def main():
         if d["users"]:
             render(d)
     patterns(collected)
+    skill_loads(collected)
     for x in skipped:
         print(f"SKIPPED {x}")
     watermark = batch[-1]["time"]["updated"] if rest else now

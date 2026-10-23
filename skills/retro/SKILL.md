@@ -31,6 +31,8 @@ State that must not be committed (the scan watermark) lives in `~/.local/share/o
 
 Run at the end of any task where the user corrected you, said you went wrong, or said it took too long.
 
+The drafting may run in a cheap subagent that receives the correction, the current `AGENTS.md` and `lessons.md`, and returns the proposed rule line, ledger line and commit message. The main session shows the draft and the user approves. Cheaper and faster than drafting in the main context; the approval stays with the user.
+
 ### 1. Name the failure
 
 One sentence: what did the agent do wrong or slowly, and what should it have done? Quote the correction verbatim. The wording is the evidence.
@@ -49,7 +51,11 @@ Pick the first that holds:
 
 Two lessons, two edits. Do not bundle.
 
-**Memory.** Create `~/.config/opencode/memory/` the first time there is a fact to store; do not create it empty. One file per topic (`environment.md`, `models.md`, `writing.md`), short, factual, no steps. The index line in `AGENTS.md` is `- <topic>: <what is in it, ≤ 12 words>: memory/<topic>.md`. The index is capped at **8 lines**; at the cap, merge topics before adding. Not memory: anything with steps (a skill), anything one skill owns (that skill's `references/`), anything secret.
+**Memory.** Create `~/.config/opencode/memory/` the first time there is a fact to store; do not create it empty. One file per topic (`environment.md`, `models.md`, `writing.md`), short, factual, no steps. The index line in `AGENTS.md` is `- <topic>: <what is in it, ≤ 12 words>: memory/<topic>.md`.
+
+Budgets are in characters so they can be measured, not counted: the index is **8 lines**, each topic file is **2,000 characters** (`wc -c`). A write that would exceed a budget is not made; consolidate in the same edit (merge entries, drop stale ones, shorten) and then write. Never split one topic across two files to get around the cap. Dense entries beat many entries: "staging is 10.0.1.50, SSH port 2222, key `~/.ssh/staging`" is one line, not three.
+
+Not memory: anything with steps (a skill), anything one skill owns (that skill's `references/`), anything already in `AGENTS.md`, anything re-discoverable in one search, anything secret.
 
 ### 3. Write the smallest edit
 
@@ -114,6 +120,8 @@ After the digests, **repeated requests** are grouped two ways:
 - **across sessions** — the same ask in 2+ sessions. Counted by *fork family*: a forked or resumed session replays the same messages and is not a second occurrence. These are workflow candidates.
 - **within one session** — the user had to ask again. These are ignored or misread requests.
 
+Then **`# skill loads`**: how often each skill was loaded across the batch, and which installed skills were never loaded. Feeds the skill-trigger-miss signal and the unused-skills audit check.
+
 For a flagged session read it in full: `retro.py session <id>`. For wider lexical evidence over a longer window: `retro.py patterns --days 30 > file`.
 
 ### Step 3. Read the signals
@@ -127,7 +135,7 @@ For a flagged session read it in full: `retro.py session <id>`. For wider lexica
 | Detail supplied only after a failed first try | The agent should have asked, or a rule should hold that detail |
 | Cost above the batch median **and** a correction cue | Wrong-path detour. Open it with `turn-cost.py all <id>` |
 | Cost above the batch median, no commit or MR linked | Spent without a deliverable. Ask what happened |
-| Work done by hand that an existing skill covers | **Skill-trigger miss**: fix the description, do not add a skill |
+| Work done by hand that an existing skill covers | **Skill-trigger miss**: fix the description, do not add a skill. Cross-check `# skill loads`: a skill with zero loads while its workflow appears in the digests is the clearest case |
 | Finished with no pushback | Positive. Note what the agent did |
 
 Correction cues are candidates, not verdicts. "I do not see logs" is description, not correction. Compare models when sessions used different ones: a pattern confined to one model is a model note, not a rule.
@@ -169,9 +177,11 @@ Report only. Contradictions first, they lose silently:
 Then bloat:
 
 - **Duplicates** — two rules saying the same thing. Keep the sharper one.
-- **Dead rules** — tools or workflows no longer in use; exhortations that never change behaviour ("write good code").
+- **Dead rules** — tools or workflows no longer in use; exhortations that never change behaviour ("write good code"). A rule whose `watch:` signal has never fired is **not** dead on that evidence alone: zero recurrences is the rule working. Call a rule dead only when the tool, path or workflow it names is gone, or when the user confirms it no longer holds.
+- **Logs in rules** — session ids, PR/MR numbers, quoted speech, or dates other than a `(user directive YYYY-MM-DD)` tag inside `AGENTS.md` or `memory/`. A rule has to stand without the story behind it; the story belongs in the commit and in `changelog.md`. Propose the rule reworded as a plain imperative and the evidence moved.
 - **Wrong layer** — a procedure spelled out as a rule (→ skill); a fact written as a rule (→ memory); a memory topic that is really a standing instruction (→ rule); a fact that only one skill uses (→ that skill's `references/`).
-- **Memory index** — over 8 lines, or a pointer whose file no longer exists, or a topic file with no pointer. Merge topics; do not raise the cap.
+- **Memory budget** — index over 8 lines, a topic file over 2,000 characters, a pointer whose file no longer exists, or a topic file with no pointer. Merge topics; do not raise the cap.
+- **Unused skills** — the scan ends with a `# skill loads` section counting how often each installed skill was loaded in the batch. A skill at zero across **three consecutive retros** is a candidate: either its description does not match how the user asks (fix the description) or the workflow is gone (remove the directory; git keeps it). Never remove silently, and never on one retro's evidence.
 - **Stale directives** — dated `(user directive …)` lines older than six months with no recurrence. Ask whether they still hold.
 
 Do not flag security or trust-boundary rules. List those separately as "touch only on request".
