@@ -1,52 +1,32 @@
-# AGENTS.md — Global behaviour rules
+# Rules
 
-These rules apply every turn. The AI reads this file on every request.
+Read every turn. One line per rule, imperative, no history. Keep this file under ~40 lines; longer explanations belong in a skill or in `changelog.md`.
 
-## Core behaviour
+## Behaviour
 
-- **Answer knowledge/storage questions from existing context.** When the user asks "where is X stored" or "how does Y work", answer from what you already know. Do not explore, search, or run tool calls to find the answer.
-- **Never read credential or auth files** (auth.json, .env, tokens) to locate a key. Describe where it is stored instead.
-- **Commit after every rules/skill/config change.** Use the structured commit format from README.md.
-- **When the output includes a URL, link, or query, include one concrete example** so the user doesn't have to ask "give me an example".
-- **Prefer dedicated tools** over composing shell commands. If a tool does what you need, use it.
+- Answer "where is X stored" / "how does Y work" / "just tell me" from knowledge, in one reply, without tool calls. If unsure, say so and offer to check.
+- Never read credential or auth files (`auth.json`, `.env`, tokens) to locate a key. Describe where it is stored instead.
+- Only do what was asked. Never install, remove or change software or system state unless told to. "What should I install?" is a question.
+- Never retry a failed command unchanged. After two identical failures, change the approach or ask.
+- When declining or deferring, give the reason and the next step in the same reply.
+- When a change builds a URL, link or query, include one concrete example in the final message.
+- Prefer dedicated tools over shell commands. Batch independent shell probes into one call.
+- Read only the block you need (`offset`/`limit`), not the whole file. Cap search output before widening.
+- Load a skill before acting whenever a task matches its trigger. Never freestyle a covered workflow.
 
-## The improvement loop
+## Improvement loop
 
-Every correction from the user is a signal. Process it immediately:
+- When corrected, told you went wrong, or told a task took too long: run the `retro` skill in immediate mode before finishing.
+- A rule violated twice gets enforcement (a permission entry or hook), not stronger wording.
+- Commit after every edit to this directory. Message has `Why:` and `Change:`; see README. Stage explicit paths, never `git add -A`.
+- Lessons go in `lessons.md` with a `watch:` signal. Decisions and "verify later" items go in `changelog.md`.
 
-1. **Was it a one-off?** (a typo, a path they know by heart) → nothing.
-2. **A repeated mistake?** → encode it as a rule.
-3. **A repeated procedure?** → encode it as a skill.
-4. **A preference or fact?** → note it in memory or changelog.
+## Git
 
-Apply the fix right away, then commit with a structured message. The retro-skill's batch scan will catch what the immediate loop missed.
+- Do not commit secrets or credentials.
+- Never force-push, `--no-verify`, or rewrite pushed history unless explicitly asked.
+- Never open, merge, approve or close a PR/MR unless explicitly asked. "You can merge it" is permission, not an instruction.
 
-## Git convention
+## Project-specific
 
-This directory is versioned. Every commit explains itself:
-
-```
-<scope>: <what changed, imperative, ≤72 chars>
-
-Why:      the problem or trigger
-Change:   what was edited and how behaviour differs now
-Evidence: session ids, links
-Watch:    the signal that shows this change didn't work
-Rejected: alternatives considered and declined (optional)
-```
-
-One commit per logical change. Scope is the area (e.g. `rules`, `lessons`, `changelog`, `retro-skill`).
-
-## Lessons ledger
-
-Every applied lesson is recorded in `lessons.md` with a `watch:` signal. Before proposing a new rule, check the ledger — if a past `watch:` signal has recurred, that lesson needs strengthening, not a new entry.
-
-## Changelog
-
-`changelog.md` has two sections:
-- **Past decisions** — why a change was made, so you can trace the reasoning later.
-- **Pending verifications** — things to test/verify next week. The retro-skill checks expired entries.
-
-## Project-specific rules
-
-_Add project-specific conventions below this line._
+_Add rules that apply only here. Date preferences: `(user directive YYYY-MM-DD)`._
