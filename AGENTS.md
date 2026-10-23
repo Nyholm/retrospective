@@ -30,3 +30,7 @@ Read every turn. One line per rule, imperative, no history. Keep this file under
 ## Project-specific
 
 _Add rules that apply only here. Date preferences: `(user directive YYYY-MM-DD)`._
+
+## Memory
+
+_Facts about this user and environment, one pointer per topic, max 8. Detail lives in `memory/<topic>.md`. Facts, not rules._

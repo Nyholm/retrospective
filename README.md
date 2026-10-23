@@ -14,6 +14,8 @@ Sessions are ephemeral. Corrections you make in one session are lost by the next
 | `scripts/turn-cost.py` | Cost breakdown per session, per turn, per request. Shows context build-up, cache writes, tool counts. |
 | `githooks/commit-msg` | Rejects commits without `Why:` and `Change:`. The retro reads commit history to detect whether a lesson recurred. |
 
+Not shipped, created on first use: `memory/<topic>.md` for facts about your environment that are not rules (what is installed, which models you use, how you like docs written). `AGENTS.md` carries one pointer line per topic, capped at 8, so rules and facts stay in separate files.
+
 ## Install
 
 Two paths, depending on whether you already have an `~/.config/opencode` setup.
